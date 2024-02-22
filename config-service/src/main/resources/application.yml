@@ -1,0 +1,20 @@
+server:
+  port: 8088
+spring:
+  profiles:
+    active: git
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/zabilal/MCB-Configs
+          default-label: main
+          clone-on-start: true
+#          username: zabilal
+#          password: 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
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

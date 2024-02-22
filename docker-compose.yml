@@ -1,0 +1,134 @@
+version: '3.7'
+services:
+
+  ## Zipkin
+  zipkin:
+    container_name: zipkin
+    image: openzipkin/zipkin
+    extra_hosts: [ 'host.docker.internal:host-gateway' ]
+    ports:
+      - "9411:9411"
+
+  ## Config-server
+  config-service:
+    build:
+      context: ./config-service
+      dockerfile: ./Dockerfile
+    #    image: zabilal/config-service:latest
+    ports:
+      - "32770:32770"
+    healthcheck:
+      test: curl --fail http://localhost:32770/employee/docker  || exit 1
+      interval: 50s
+      timeout: 50s
+      retries: 5
+
+  ## Eureka Server
+  discovery-service:
+    build:
+      context: ./discovery-service
+      dockerfile: ./Dockerfile
+    #    image: zabilal/discovery-service:latest
+    ports:
+      - "32771:32771"
+    depends_on:
+      config-service:
+        condition: service_healthy
+    links:
+      - config-service
+    healthcheck:
+      test: curl --fail http://localhost:32771/eureka/v2/apps || exit 1
+      interval: 50s
+      timeout: 50s
+      retries: 4
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+  ## Organization Service
+  property-service:
+    build:
+      context: ./property-service
+      dockerfile: ./Dockerfile
+    #    image: zabilal/organization-service:latest
+    ports:
+      - "32773:32773"
+    #    extra_hosts:
+    #      - "dockerhost:192.168.167.121"
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+  ## Employee Service
+  comment-service:
+    build:
+      context: ./comment-service
+      dockerfile: ./Dockerfile
+    #    image: zabilal/employee-service:latest
+    ports:
+      - "32774:32774"
+    #    extra_hosts:
+    #      - "dockerhost:192.168.167.121"
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+  ## Department Service
+  document-service:
+    build:
+      context: ./document-service
+      dockerfile: ./Dockerfile
+    #    image: zabilal/department-service:latest
+    ports:
+      - "32775:32775"
+    #    extra_hosts:
+    #      - "dockerhost:192.168.167.121"
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+  ## Authentication Service
+  authentication-service:
+    build:
+      context: ./authentication-service
+      dockerfile: ./Dockerfile
+    ports:
+      - "32776:32776"
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+  ## Correspondence Service
+  correspondence-service:
+    build:
+      context: ./correspondence
+      dockerfile: ./Dockerfile
+    #    image: zabilal/correspondence:latest
+    ports:
+      - "32777:32777"
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+  ## Api-gateway service
+  gateway-service:
+    build:
+      context: ./gateway-service
+      dockerfile: ./Dockerfile
+    #    image: zabilal/gateway-service:latest
+    ports:
+      - "32772:32772"
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker

@@ -1,0 +1,11 @@
+spring:
+  config:
+    import: "optional:configserver:http://config-service:32770"
+    activate:
+      on-profile: docker
+---
+spring:
+  application:
+    name: correspondence-service
+  config:
+    import: "optional:configserver:http://localhost:32770"
